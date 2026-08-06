@@ -179,6 +179,7 @@ class RunPaths:
     optimized: Path
     assigned: Path
     strip_log: Path
+    boundary_repairs: Path
     unassigned: Path
     overhangs_used: Path
     full_info: Path
@@ -210,6 +211,7 @@ class RunPaths:
             optimized=run_dir / f"{run_name}_Optimised.csv",
             assigned=run_dir / f"{run_name}_Assigned.csv",
             strip_log=run_dir / f"{run_name}_stripped_ATG_log.csv",
+            boundary_repairs=run_dir / f"{run_name}_vector_boundary_synonymous_corrections.csv",
             unassigned=run_dir / f"{run_name}_unassigned.csv",
             overhangs_used=run_dir / f"{run_name}_overhangs_used.csv",
             full_info=run_dir / f"{run_name}_FULL_INFO.csv",
@@ -447,6 +449,186 @@ class PoolAssigner:
 
     def _contains_forbidden_site(self, sequence: str) -> bool:
         return any(site in sequence for site in self.config.forbidden_typeiis_sites)
+
+    def _boundary_site_occurrences(
+        self,
+        sequence: str,
+        vector_oh1: str,
+        vector_oh2: str,
+    ) -> list[dict[str, Any]]:
+        """Return forbidden sites that span either vector/coding boundary."""
+        occurrences: list[dict[str, Any]] = []
+        junctions = (
+            ("5_prime", vector_oh1, sequence, "right"),
+            ("3_prime", sequence, vector_oh2, "left"),
+        )
+        for boundary_name, left, right, coding_side in junctions:
+            combined = left + right
+            boundary = len(left)
+            for site in sorted(self.config.forbidden_typeiis_sites):
+                for start in range(len(combined) - len(site) + 1):
+                    if not combined.startswith(site, start):
+                        continue
+                    if not start < boundary < start + len(site):
+                        continue
+                    if coding_side == "right":
+                        coding_start = max(boundary, start) - boundary
+                        coding_end = min(len(combined), start + len(site)) - boundary
+                    else:
+                        coding_start = max(0, start)
+                        coding_end = min(boundary, start + len(site))
+                    occurrences.append({
+                        "boundary": boundary_name,
+                        "site": site,
+                        "coding_positions": set(range(coding_start, coding_end)),
+                    })
+        return occurrences
+
+    def _codon_amino_acid(self, codon: str) -> str | None:
+        amino_acid = self.codon_table.forward_table.get(codon)
+        if amino_acid is not None:
+            return amino_acid
+        return "*" if codon in self.codon_table.stop_codons else None
+
+    def _synonymous_codons(self, codon: str) -> list[str]:
+        amino_acid = self._codon_amino_acid(codon)
+        if amino_acid is None:
+            return []
+        if amino_acid == "*":
+            return sorted(self.codon_table.stop_codons)
+        return self.synonyms.get(amino_acid, [])
+
+    def _repair_boundary_sequence(
+        self,
+        sequence_name: str,
+        sequence: str,
+        vector_oh1: str,
+        vector_oh2: str,
+    ) -> tuple[str, list[dict[str, Any]]]:
+        """Find the smallest synonymous repair for vector-boundary Type IIS sites."""
+        occurrences = self._boundary_site_occurrences(sequence, vector_oh1, vector_oh2)
+        if not occurrences:
+            return sequence, []
+        codon_starts = sorted({
+            position - (position % 3)
+            for occurrence in occurrences
+            for position in occurrence["coding_positions"]
+        })
+        choices: list[list[str]] = []
+        for codon_start in codon_starts:
+            old_codon = sequence[codon_start:codon_start + 3]
+            synonyms = self._synonymous_codons(old_codon)
+            if len(old_codon) != 3 or not synonyms:
+                raise ValueError(
+                    f"{sequence_name}: cannot synonymously repair a Type IIS site at a "
+                    f"vector boundary because codon {old_codon!r} is not editable."
+                )
+            choices.append(synonyms)
+
+        candidates: list[tuple[int, int, tuple[str, ...], str]] = []
+        for replacements in product(*choices):
+            patches = tuple(zip(codon_starts, replacements))
+            candidate = self._sequence_with_patches(sequence, patches)
+            if candidate == sequence:
+                continue
+            if self._contains_forbidden_site(candidate):
+                continue
+            if self._boundary_site_occurrences(candidate, vector_oh1, vector_oh2):
+                continue
+            if str(Seq(candidate).translate()) != str(Seq(sequence).translate()):
+                continue
+            changed_codons = sum(
+                candidate[start:start + 3] != sequence[start:start + 3]
+                for start in codon_starts
+            )
+            nucleotide_changes = sum(left != right for left, right in zip(sequence, candidate))
+            candidates.append((changed_codons, nucleotide_changes, replacements, candidate))
+        if not candidates:
+            sites = ", ".join(sorted({
+                f"{occurrence['boundary']}:{occurrence['site']}"
+                for occurrence in occurrences
+            }))
+            raise ValueError(
+                f"{sequence_name}: Type IIS site(s) {sites} span a vector/coding boundary, "
+                "and no synonymous coding-sequence repair is possible without changing the "
+                "configured vector overhang."
+            )
+
+        repaired = min(candidates)[-1]
+        changes: list[dict[str, Any]] = []
+        for codon_start in codon_starts:
+            old_codon = sequence[codon_start:codon_start + 3]
+            new_codon = repaired[codon_start:codon_start + 3]
+            if old_codon == new_codon:
+                continue
+            codon_positions = set(range(codon_start, codon_start + 3))
+            relevant = [
+                occurrence for occurrence in occurrences
+                if codon_positions & occurrence["coding_positions"]
+            ]
+            changes.append({
+                "Boundary": ";".join(sorted({item["boundary"] for item in relevant})),
+                "Configured_TypeIIS_Recognition_Site": self.config.typeiis_site,
+                "Forbidden_Site_Observed": ";".join(sorted({item["site"] for item in relevant})),
+                "Codon_Start_0_Based": codon_start,
+                "Old_Codon": old_codon,
+                "New_Codon": new_codon,
+                "Amino_Acid": self._codon_amino_acid(old_codon),
+                "VectorOH1": vector_oh1,
+                "VectorOH2": vector_oh2,
+            })
+        return repaired, changes
+
+    def _repair_vector_boundaries(
+        self,
+        df: pd.DataFrame,
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+        columns = [
+            "Sequence Name", "Block", "Boundary",
+            "Configured_TypeIIS_Recognition_Site", "Forbidden_Site_Observed",
+            "Codon_Start_0_Based", "Old_Codon", "New_Codon", "Amino_Acid",
+            "VectorOH1", "VectorOH2",
+        ]
+        if df.empty:
+            return df, pd.DataFrame(columns=columns)
+        repaired_df = df.copy()
+        fragment_columns = sorted(
+            [column for column in repaired_df if column.startswith("DNA Fragment ")],
+            key=lambda column: int(column.replace("DNA Fragment ", "")),
+        )
+        correction_rows: list[dict[str, Any]] = []
+        for row_index, row in repaired_df.iterrows():
+            sequence_name = str(row["Sequence Name"])
+            sequence = str(row["Full Sequence"]).strip().upper()
+            vector_oh1 = str(row.get("VectorOH1", self.config.vector_oh1)).strip().upper()
+            vector_oh2 = str(row.get("VectorOH2", self.config.vector_oh2)).strip().upper()
+            repaired, changes = self._repair_boundary_sequence(
+                sequence_name, sequence, vector_oh1, vector_oh2
+            )
+            if not changes:
+                continue
+            fragments = [
+                (column, str(row[column]).strip().upper())
+                for column in fragment_columns
+                if self._nonempty(row.get(column))
+            ]
+            fragment_start = 0
+            for column, fragment in fragments:
+                fragment_end = fragment_start + len(fragment)
+                new_fragment = repaired[fragment_start:fragment_end]
+                if len(new_fragment) != len(fragment):
+                    raise AssertionError(f"{sequence_name}: boundary repair changed fragment length")
+                repaired_df.at[row_index, column] = new_fragment
+                fragment_start = fragment_end - 4
+            repaired_df.at[row_index, "Full Sequence"] = repaired
+            for change in changes:
+                correction_rows.append({
+                    "Sequence Name": sequence_name,
+                    "Block": int(row["Block"]),
+                    **change,
+                })
+        corrections = pd.DataFrame(correction_rows, columns=columns)
+        return repaired_df, corrections
 
     @staticmethod
     def _mutated_slice(
@@ -820,6 +1002,14 @@ class PoolAssigner:
                     raise AssertionError(f"{name}: fragment {index} exceeds {maximum} nt")
             if self._contains_forbidden_site(full):
                 raise AssertionError(f"{name}: forbidden Type IIS site in Full Sequence")
+            vector_oh1 = str(row.get("VectorOH1", self.config.vector_oh1)).strip().upper()
+            vector_oh2 = str(row.get("VectorOH2", self.config.vector_oh2)).strip().upper()
+            boundary_sites = self._boundary_site_occurrences(full, vector_oh1, vector_oh2)
+            if boundary_sites:
+                details = ", ".join(sorted({
+                    f"{item['boundary']}:{item['site']}" for item in boundary_sites
+                }))
+                raise AssertionError(f"{name}: forbidden Type IIS site at vector boundary ({details})")
             if str(Seq(full).translate()) != str(Seq(source[name]).translate()):
                 raise AssertionError(f"{name}: a synonymous edit changed translation")
         for block, block_df in df.groupby("Block"):
@@ -891,14 +1081,17 @@ class PoolAssigner:
                 *overhang_columns, *fragment_columns, "Full Sequence",
             ]
             df = df[[column for column in order if column in df]]
+        df, boundary_repairs = self._repair_vector_boundaries(df)
         self._validate(df, records)
         df.to_csv(self.paths.assigned, index=False)
+        boundary_repairs.to_csv(self.paths.boundary_repairs, index=False)
         pd.DataFrame({"Sequence Name": unassigned}).to_csv(self.paths.unassigned, index=False)
         self._write_used_overhangs(df)
         if self.config.show_progress:
             print(
                 f"[2/3] Pool assignment: {len(df)} assigned, {len(unassigned)} unassigned, "
-                f"{df['Block'].nunique() if not df.empty else 0} blocks, {total_nodes:,} search states"
+                f"{df['Block'].nunique() if not df.empty else 0} blocks, {total_nodes:,} search states, "
+                f"{len(boundary_repairs)} vector-boundary synonymous correction(s)"
             )
         return df, unassigned, total_nodes
 
@@ -1241,6 +1434,7 @@ def _planned_outputs(config: WorkflowConfig, paths: RunPaths, input_kind: str) -
     outputs = [
         paths.assigned,
         paths.strip_log,
+        paths.boundary_repairs,
         paths.unassigned,
         paths.overhangs_used,
     ]

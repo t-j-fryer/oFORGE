@@ -190,6 +190,9 @@ Purpose:
 - `outputs/dTF001_dTF016_oPool_Order_Fragments.csv`
 - `outputs/dTF001_dTF016_unassigned.csv` (only when assignment fails for some entries)
 - `outputs/dTF001_dTF016_stripped_ATG_log.csv` (if enabled)
+- `outputs/dTF001_dTF016_vector_boundary_synonymous_corrections.csv` (header-only when no repair is needed)
+
+The shared workflow checks the configured Type IIS recognition site and reverse complement across both vector/coding boundaries before primer assembly. It may alter coding DNA only through translation-preserving synonymous substitutions; configured vector overhangs are never changed. Any repair is propagated into assigned fragments and logged, and an impossible synonymous repair stops the run.
 
 ## Recommended Operator Workflow
 
