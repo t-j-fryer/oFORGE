@@ -68,6 +68,12 @@ python scripts/opool_cli.py --help
 
 Existing outputs are protected by default. Choose a different `--run-name`/`--output-dir`, or explicitly pass `--force` to replace them.
 
+### Type IIS vector-boundary safety
+
+Pool assignment checks the configured Type IIS recognition sequence and its reverse complement across both vector-overhang/coding-sequence boundaries. If a boundary creates a site, the workflow searches for the smallest synonymous coding change, rebuilds the affected fragments, and leaves both vector overhangs unchanged. It fails with an explicit error when no synonymous repair is possible rather than altering an overhang or protein sequence.
+
+Repairs are recorded in `<run_name>_vector_boundary_synonymous_corrections.csv`; the file is written with headers even when no repair is needed.
+
 ### Codon-optimization species
 
 For amino-acid inputs, set `CODON_SPECIES` in the simple or fast notebook, or pass `--codon-species` to the CLI. The default is `e_coli`. The built-in species keywords supplied by `python_codon_tables` are:
