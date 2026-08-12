@@ -38,6 +38,7 @@ DEFAULT_INPUT_PATH = DATA_DIR / "AAseq_dTF001_dTF016.csv"
 DEFAULT_OVERHANGS_PATH = DATA_DIR / "overhangs.csv"
 DEFAULT_PRIMERS_PATH = DATA_DIR / "orthogonal_oligos.csv"
 DNA_BASES = set("ACGT")
+AA_SEQUENCE_COLUMN_NAMES = ("aa_seq", "amino_acid_sequence")
 BUILTIN_CODON_SPECIES = tuple(sorted({
     "_".join(table_name.split("_")[:-1])
     for table_name in available_codon_tables_names
@@ -296,7 +297,7 @@ def _detect_input_kind(path: Path, requested: str) -> str:
     columns = {str(column).strip().lower() for column in header.columns}
     if "dna_seq_optimized" in columns:
         return "optimized"
-    if {"name", "aa_seq"}.issubset(columns):
+    if "name" in columns and any(column in columns for column in AA_SEQUENCE_COLUMN_NAMES):
         return "aa"
     return "aa"
 
@@ -304,9 +305,13 @@ def _detect_input_kind(path: Path, requested: str) -> str:
 def _read_aa_input(path: Path) -> pd.DataFrame:
     header = pd.read_csv(path, nrows=0)
     normalized = {str(column).strip().lower(): column for column in header.columns}
-    if {"name", "aa_seq"}.issubset(normalized):
+    sequence_column = next(
+        (normalized[name] for name in AA_SEQUENCE_COLUMN_NAMES if name in normalized),
+        None,
+    )
+    if "name" in normalized and sequence_column is not None:
         df = pd.read_csv(path, dtype={normalized["name"]: str})
-        df = df.rename(columns={normalized["name"]: "name", normalized["aa_seq"]: "aa_seq"})
+        df = df.rename(columns={normalized["name"]: "name", sequence_column: "aa_seq"})
         df = df[["name", "aa_seq"]]
     else:
         df = pd.read_csv(path, header=None, names=["name", "aa_seq"], dtype={"name": str})

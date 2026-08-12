@@ -17,13 +17,14 @@ For AI assistant handoff, settings, workflow conventions, and FAQ, see `AI_WORKF
 - `data/orthogonal_oligos.csv`: default primer inventory
 - `data/overhangs.csv`: default overhang inventory
 - `data/AAseq_dTF001_dTF016.csv`: bundled example amino-acid library
+- `data/fpbase_top500.csv`: bundled library of 500 fluorescent-protein sequences from FPbase
 - `outputs/`: generated outputs from notebook runs
 
 ## Google Colab — no local installation
 
 Click the **Open in Colab** badge above, edit the single **User settings** cell, and choose **Runtime → Run all**.
 
-- Leave `USE_BUNDLED_EXAMPLE = True` to run the bundled amino-acid library.
+- Leave `USE_BUNDLED_DATASET = True` and choose either bundled amino-acid library from the dropdown.
 - Set it to `False` to upload one amino-acid or optimized-DNA CSV when prompted.
 - The tracked `data/overhangs.csv` and `data/orthogonal_oligos.csv` inventories are used automatically.
 - `GENES_PER_SUBPOOL = 0` means automatic packing with no fixed gene-count limit.
@@ -32,6 +33,22 @@ Click the **Open in Colab** badge above, edit the single **User settings** cell,
 - Optional Google Drive output is available but disabled by default, so the notebook does not request Drive access unless the user chooses it.
 
 Colab runtimes are temporary. Download the ZIP before closing the runtime unless Google Drive output was enabled.
+
+### Exploring oligo length
+
+The Colab notebook provides an `OPOOL_LENGTH` slider from 250 to 350 nt. A sensible first comparison is to run the same dataset once at each endpoint:
+
+- **250 nt:** less coding capacity per oligo after primers and assembly elements, usually producing more fragments and more order oligos. Because each fragmented gene consumes unique internal overhangs, automatic sub-pools may also contain fewer genes.
+- **350 nt:** more coding capacity, usually producing fewer fragments and order oligos and allowing more genes per sub-pool. Longer oligos may have different synthesis pricing or vendor constraints.
+
+Every Colab run writes to a new timestamped folder. Compare **Total order oligos**, **Sub-pools**, and the displayed genes/oligos-per-sub-pool table. The order CSV row count is the number of oligos to purchase.
+
+The same comparison can be run from the terminal, for example:
+
+```bash
+python scripts/opool_cli.py --input data/fpbase_top500.csv --opool-length 250 --run-name fpbase_250
+python scripts/opool_cli.py --input data/fpbase_top500.csv --opool-length 350 --run-name fpbase_350
+```
 
 ## Python Environment + Kernel
 
@@ -73,7 +90,7 @@ python scripts/opool_cli.py
 
 The example outputs are written to `outputs/`. Existing files are protected, so a second run will stop rather than silently replace them.
 
-For a real project, only the input normally needs to change. The input can be either an amino-acid CSV or an existing optimized-DNA CSV; its format is detected automatically:
+For a real project, only the input normally needs to change. The input can be either an amino-acid CSV or an existing optimized-DNA CSV; its format is detected automatically. Headered amino-acid CSVs may use `name` with either `aa_seq` or `amino_acid_sequence`:
 
 ```bash
 python scripts/opool_cli.py --input "/path/to/amino_acids.csv"
@@ -151,6 +168,7 @@ oPool Optimiser builds on the open-source scientific Python ecosystem. In partic
 - Gene optimization uses [DnaChisel](https://github.com/Edinburgh-Genome-Foundry/DnaChisel): Zulkower V, Rosser S. “DNA Chisel, a versatile sequence optimizer.” *Bioinformatics* 36(16), 4508–4509 (2020). [doi:10.1093/bioinformatics/btaa558](https://doi.org/10.1093/bioinformatics/btaa558).
 - Sequence representation, translation, and reverse-complement operations use [Biopython](https://biopython.org/): Cock PJA et al. “Biopython: freely available Python tools for computational molecular biology and bioinformatics.” *Bioinformatics* 25(11), 1422–1423 (2009). [doi:10.1093/bioinformatics/btp163](https://doi.org/10.1093/bioinformatics/btp163).
 - Codon-usage tables are supplied by [python-codon-tables](https://github.com/Edinburgh-Genome-Foundry/python_codon_tables).
+- The bundled fluorescent-protein library was sourced from [FPbase](https://www.fpbase.org/): Lambert TJ. “FPbase: a community-editable fluorescent protein database.” *Nature Methods* 16, 277–278 (2019). [doi:10.1038/s41592-019-0352-8](https://doi.org/10.1038/s41592-019-0352-8). Individual proteins may have additional primary references listed by FPbase.
 - Data handling and numerical operations use [pandas](https://pandas.pydata.org/) and [NumPy](https://numpy.org/).
 - The hosted notebook runs on [Google Colab](https://colab.research.google.com/).
 - The bundled overhang inventory is intended for use with experimentally informed Golden Gate overhang selection. [NEB’s Ligase Fidelity tools](https://www.neb.com/en-us/applications/cloning-and-synthetic-biology/dna-assembly-and-cloning/golden-gate-assembly/ligase-fidelity) are a useful source for evaluating or generating compatible high-fidelity junction sets.
