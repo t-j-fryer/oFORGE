@@ -2,18 +2,36 @@
 
 Fast, user-friendly workflows for optimizing genes and preparing pooled Golden Gate cloning oligos.
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t-j-fryer/oPool_Optimiser/blob/main/notebooks/oPool_Cloning_Colab.ipynb)
+
 For AI assistant handoff, settings, workflow conventions, and FAQ, see `AI_WORKFLOW_SUMMARY.md`.
 
 ## Repository Layout
 
 - `notebooks/oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb`: modular notebook with the faster long-gene pool search
 - `notebooks/oPool_Cloning_Notebook_Simple.ipynb`: edit one input cell, then choose **Run All**
+- `notebooks/oPool_Cloning_Colab.ipynb`: one-click hosted workflow with file upload and ZIP download
 - `scripts/opool_cli.py`: terminal command-line interface
-- `scripts/opool_workflow.py`: shared implementation used by the CLI and simple notebook
+- `scripts/opool_workflow.py`: shared implementation used by the CLI, simple notebook, and Colab notebook
+- `requirements-colab.txt`: minimal dependencies installed by the hosted notebook
 - `data/orthogonal_oligos.csv`: default primer inventory
 - `data/overhangs.csv`: default overhang inventory
 - `data/example_amino_acids.csv`: small bundled example amino-acid input
 - `outputs/`: generated outputs from notebook runs
+
+## Google Colab — no local installation
+
+Click the **Open in Colab** badge above, edit the single **User settings** cell, and choose **Runtime → Run all**.
+
+- Leave `USE_BUNDLED_EXAMPLE = True` for a quick two-sequence test.
+- Set it to `False` to upload one amino-acid or optimized-DNA CSV when prompted.
+- The tracked `data/overhangs.csv` and `data/orthogonal_oligos.csv` inventories are used automatically.
+- `GENES_PER_SUBPOOL = 0` means automatic packing with no fixed gene-count limit.
+- A standard CPU runtime is sufficient.
+- Every run creates a ZIP containing all CSV and FASTA outputs and downloads it automatically.
+- Optional Google Drive output is available but disabled by default, so the notebook does not request Drive access unless the user chooses it.
+
+Colab runtimes are temporary. Download the ZIP before closing the runtime unless Google Drive output was enabled.
 
 ## Python Environment + Kernel
 
@@ -125,3 +143,16 @@ Either the short keyword or full table name is accepted. Alternatively, use a nu
 
 - Notebook defaults use the bundled files in `data/` and write example outputs into `outputs/`.
 - If you switch to your own datasets, update the single user-input cell in the simple notebook or the top configuration cell in the fast notebook.
+
+## Acknowledgements and references
+
+oPool Optimiser builds on the open-source scientific Python ecosystem. In particular:
+
+- Gene optimization uses [DnaChisel](https://github.com/Edinburgh-Genome-Foundry/DnaChisel): Zulkower V, Rosser S. “DNA Chisel, a versatile sequence optimizer.” *Bioinformatics* 36(16), 4508–4509 (2020). [doi:10.1093/bioinformatics/btaa558](https://doi.org/10.1093/bioinformatics/btaa558).
+- Sequence representation, translation, and reverse-complement operations use [Biopython](https://biopython.org/): Cock PJA et al. “Biopython: freely available Python tools for computational molecular biology and bioinformatics.” *Bioinformatics* 25(11), 1422–1423 (2009). [doi:10.1093/bioinformatics/btp163](https://doi.org/10.1093/bioinformatics/btp163).
+- Codon-usage tables are supplied by [python-codon-tables](https://github.com/Edinburgh-Genome-Foundry/python_codon_tables).
+- Data handling and numerical operations use [pandas](https://pandas.pydata.org/) and [NumPy](https://numpy.org/).
+- The hosted notebook runs on [Google Colab](https://colab.research.google.com/).
+- The bundled overhang inventory is intended for use with experimentally informed Golden Gate overhang selection. [NEB’s Ligase Fidelity tools](https://www.neb.com/en-us/applications/cloning-and-synthetic-biology/dna-assembly-and-cloning/golden-gate-assembly/ligase-fidelity) are a useful source for evaluating or generating compatible high-fidelity junction sets.
+
+These projects and services retain their own licenses and trademarks. oPool Optimiser is not affiliated with or endorsed by their maintainers or providers.

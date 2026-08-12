@@ -7,11 +7,14 @@ This is the concise handoff guide for contributors and coding assistants working
 ## Canonical entry points
 
 - `notebooks/oPool_Cloning_Notebook_Simple.ipynb`: primary notebook; edit one cell and choose **Run All**.
+- `notebooks/oPool_Cloning_Colab.ipynb`: hosted public workflow; upload one CSV and download one result ZIP.
 - `scripts/opool_cli.py`: primary terminal interface.
 - `scripts/opool_workflow.py`: shared implementation used by the simple notebook and CLI.
 - `notebooks/oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb`: advanced modular notebook.
 
 The simple notebook and CLI should behave consistently. New core behavior belongs in `scripts/opool_workflow.py`, with tests under `tests/`, rather than being independently reimplemented in each entry point.
+
+The Colab notebook is also a thin front end over `scripts/opool_workflow.py`. It must clone the public repository before importing code because opening an `.ipynb` from GitHub does not place the rest of the repository in the Colab runtime. Keep its dependency set in `requirements-colab.txt`, its Google Drive integration optional, and its final ZIP download enabled by default.
 
 ## Bundled defaults
 
@@ -107,6 +110,8 @@ For a run prefix `<run>`:
 6. Add regression tests for path handling and biology-critical behavior.
 7. Do not stage local primer-consumption files or generated outputs unless explicitly requested.
 8. Run `python -m unittest discover -s tests -v`, compilation checks, and `git diff --check` before publishing.
+9. Keep the Colab notebook free of stored outputs and ensure every code cell is valid Python rather than relying on local-only notebook state.
+10. Keep the README acknowledgements synchronized when a direct scientific dependency or external design service is added or removed.
 
 ## Setup and smoke test
 

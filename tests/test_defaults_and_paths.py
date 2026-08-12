@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import json
 import sys
 import tempfile
 import unittest
@@ -88,6 +89,7 @@ class DefaultAndPathTests(unittest.TestCase):
             REPO_ROOT / "scripts" / "opool_cli.py",
             REPO_ROOT / "notebooks" / "oPool_Cloning_Notebook_Simple.ipynb",
             REPO_ROOT / "notebooks" / "oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb",
+            REPO_ROOT / "notebooks" / "oPool_Cloning_Colab.ipynb",
         ]
         forbidden_tokens = (
             "op" + "TF",
@@ -99,6 +101,40 @@ class DefaultAndPathTests(unittest.TestCase):
                 contents = path.read_text()
                 for token in forbidden_tokens:
                     self.assertNotIn(token, contents)
+
+    def test_colab_notebook_is_self_contained_and_output_free(self) -> None:
+        notebook_path = REPO_ROOT / "notebooks" / "oPool_Cloning_Colab.ipynb"
+        notebook = json.loads(notebook_path.read_text())
+        code = "\n".join(
+            "".join(cell.get("source", []))
+            for cell in notebook["cells"]
+            if cell["cell_type"] == "code"
+        )
+
+        self.assertEqual(notebook["nbformat"], 4)
+        self.assertTrue(notebook["metadata"]["colab"]["include_colab_link"])
+        self.assertIn("https://github.com/t-j-fryer/oPool_Optimiser.git", code)
+        self.assertIn("requirements-colab.txt", code)
+        self.assertIn('PROJECT_ROOT / "data" / "overhangs.csv"', code)
+        self.assertIn('PROJECT_ROOT / "data" / "orthogonal_oligos.csv"', code)
+        self.assertIn("files.upload()", code)
+        self.assertIn("files.download", code)
+        self.assertIn("SAVE_TO_GOOGLE_DRIVE = False", code)
+        self.assertIn("GENES_PER_SUBPOOL = 0", code)
+        self.assertIn("WorkflowConfig(", code)
+
+        for cell in notebook["cells"]:
+            if cell["cell_type"] == "code":
+                self.assertIsNone(cell["execution_count"])
+                self.assertEqual(cell["outputs"], [])
+                compile("".join(cell["source"]), str(notebook_path), "exec")
+
+    def test_colab_requirements_exclude_notebook_environment_packages(self) -> None:
+        requirements = (REPO_ROOT / "requirements-colab.txt").read_text().lower()
+        self.assertIn("dnachisel", requirements)
+        self.assertIn("biopython", requirements)
+        self.assertNotIn("jupyterlab", requirements)
+        self.assertNotIn("ipykernel", requirements)
 
 
 if __name__ == "__main__":
