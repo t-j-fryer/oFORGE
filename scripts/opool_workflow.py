@@ -34,7 +34,7 @@ from python_codon_tables import available_codon_tables_names
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
-DEFAULT_INPUT_PATH = DATA_DIR / "example_amino_acids.csv"
+DEFAULT_INPUT_PATH = DATA_DIR / "AAseq_dTF001_dTF016.csv"
 DEFAULT_OVERHANGS_PATH = DATA_DIR / "overhangs.csv"
 DEFAULT_PRIMERS_PATH = DATA_DIR / "orthogonal_oligos.csv"
 DNA_BASES = set("ACGT")
