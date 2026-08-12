@@ -10,9 +10,9 @@ For AI assistant handoff, settings, workflow conventions, and FAQ, see `AI_WORKF
 - `notebooks/oPool_Cloning_Notebook_Simple.ipynb`: edit one input cell, then choose **Run All**
 - `scripts/opool_cli.py`: terminal command-line interface
 - `scripts/opool_workflow.py`: shared implementation used by the CLI and simple notebook
-- `data/orthogonal_oligos.csv`: example primer inventory
-- `data/overhangs.csv`: example overhang list
-- `data/AAseq_dTF001_dTF016.csv`: example AA input table (copied from `dTF001_dTF016_merged.csv`)
+- `data/orthogonal_oligos.csv`: default primer inventory
+- `data/overhangs.csv`: default overhang inventory
+- `data/example_amino_acids.csv`: small bundled example amino-acid input
 - `outputs/`: generated outputs from notebook runs
 
 ## Python Environment + Kernel
@@ -47,26 +47,55 @@ Open `notebooks/oPool_Cloning_Notebook_Simple.ipynb`, edit its single **User inp
 
 ## Terminal workflow
 
-The input can be either a two-column amino-acid CSV or an existing `*_Optimised.csv`; the CLI detects which one it received.
+After installing the environment, this command runs the complete workflow with the bundled files in `data/`:
 
 ```bash
-source .venv/bin/activate
+python scripts/opool_cli.py
+```
+
+The example outputs are written to `outputs/`. Existing files are protected, so a second run will stop rather than silently replace them.
+
+For a real project, only the input normally needs to change. The input can be either an amino-acid CSV or an existing optimized-DNA CSV; its format is detected automatically:
+
+```bash
+python scripts/opool_cli.py --input "/path/to/amino_acids.csv"
+```
+
+### Defaults
+
+| Setting | Default |
+| --- | --- |
+| Input | `data/example_amino_acids.csv` |
+| Internal overhangs | `data/overhangs.csv` |
+| Orthogonal primers | `data/orthogonal_oligos.csv` |
+| Oligo length | 250 nt |
+| Vector overhangs | `GCTT` / `AGTG` |
+| Genes per sub-pool | automatic packing; no fixed limit |
+| Primer mode | combinatorial |
+| Type IIS enzyme settings | `GGTCTC` recognition site plus separate `A` N-base |
+| Codon host | *E. coli* |
+| Leading methionine | stripped |
+
+The two inventory paths are resolved from the repository, even if the command is launched from another directory. Relative project input paths are resolved from the current directory; paths beginning with `data/` always refer to this repository's bundled data.
+
+Override only the settings your assembly requires. For example:
+
+```bash
 python scripts/opool_cli.py \
-  --input "/path/to/opTF010_Optimised.csv" \
-  --overhangs "/path/to/overhangs_bgal.csv" \
+  --input "/path/to/optimized_dna.csv" \
   --opool-length 350 \
   --vector-oh1 TATG \
   --vector-oh2 GGAT \
   --genes-per-subpool 1
 ```
 
-Only `--input` is universally required. Repository overhang and primer inventories, 250-nt oligos, `GCTT`/`AGTG` vector overhangs, automatic pool packing, combinatorial primers, and BsaI are the defaults. Run this for all options:
+Run this for all options and their defaults:
 
 ```bash
 python scripts/opool_cli.py --help
 ```
 
-Existing outputs are protected by default. Choose a different `--run-name`/`--output-dir`, or explicitly pass `--force` to replace them.
+For external inputs, outputs are written beside the input file by default. Choose a different `--run-name`/`--output-dir`, or explicitly pass `--force` to replace existing outputs.
 
 ### Type IIS vector-boundary safety
 
@@ -94,5 +123,5 @@ Either the short keyword or full table name is accepted. Alternatively, use a nu
 
 ## Notes
 
-- Notebook defaults are set to the bundled example input files in `data/` and write outputs into `outputs/`.
+- Notebook defaults use the bundled files in `data/` and write example outputs into `outputs/`.
 - If you switch to your own datasets, update the single user-input cell in the simple notebook or the top configuration cell in the fast notebook.
