@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Friendly command-line interface for the oPool cloning workflow."""
+"""Shared command-line implementation for oFORGE Designer."""
 
 from __future__ import annotations
 
@@ -48,18 +48,18 @@ def optional_seed(value: str) -> int | None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="opool",
+        prog="oforge",
         description=(
-            "Optimize genes, assign fast Golden Gate fragment pools, and add "
-            "orthogonal primers/Type IIS elements. Input may be a two-column "
-            "amino-acid CSV or an existing *_Optimised.csv file."
+            "oFORGE Designer optimises genes, assigns Golden Gate fragment pools, "
+            "and adds orthogonal primers and Type IIS elements. Input may be a "
+            "two-column amino-acid CSV or an existing *_Optimised.csv file."
         ),
         formatter_class=HelpFormatter,
         epilog=(
             "Examples:\n"
-            "  python scripts/opool_cli.py\n"
-            "  python scripts/opool_cli.py --input /path/to/amino_acids.csv\n"
-            "  python scripts/opool_cli.py --input /path/to/optimized_dna.csv "
+            "  python scripts/oforge_cli.py\n"
+            "  python scripts/oforge_cli.py --input /path/to/amino_acids.csv\n"
+            "  python scripts/oforge_cli.py --input /path/to/optimized_dna.csv "
             "--opool-length 350 --vector-oh1 TATG --vector-oh2 GGAT"
         ),
     )

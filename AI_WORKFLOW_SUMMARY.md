@@ -2,13 +2,19 @@
 
 Last updated: 2026-08-11
 
-This is the concise handoff guide for contributors and coding assistants working on `oPool_Optimiser`. The public examples must remain generic: do not add experiment names, local database paths, or user-specific absolute paths.
+This is the concise handoff guide for contributors and coding assistants working on **oFORGE** (*Scalable gene construction from oligonucleotide pools*). The public repository is `t-j-fryer/oFORGE`. Public examples must remain generic: do not add experiment names, local database paths, or user-specific absolute paths.
+
+The platform has two named components:
+
+- **oFORGE Designer:** computational sequence optimisation, fragmentation, overhang and sub-pool assignment, and synthesis-ready oligo generation.
+- **oFORGE assembly:** selective sub-pool PCR, Golden Gate assembly, and transformation.
 
 ## Canonical entry points
 
 - `notebooks/oPool_Cloning_Notebook_Simple.ipynb`: primary notebook; edit one cell and choose **Run All**.
 - `notebooks/oPool_Cloning_Colab.ipynb`: hosted public workflow; upload one CSV and download one result ZIP.
-- `scripts/opool_cli.py`: primary terminal interface.
+- `scripts/oforge_cli.py`: canonical terminal interface.
+- `scripts/opool_cli.py`: legacy-compatible CLI implementation retained for existing users.
 - `scripts/opool_workflow.py`: shared implementation used by the simple notebook and CLI.
 - `notebooks/oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb`: advanced modular notebook.
 
@@ -120,7 +126,7 @@ For a run prefix `<run>`:
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python scripts/opool_cli.py --help
+python scripts/oforge_cli.py --help
 python -m unittest discover -s tests -v
 ```
 

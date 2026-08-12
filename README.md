@@ -1,20 +1,28 @@
-# oPool Optimiser
+# oFORGE
 
-Fast, user-friendly workflows for optimizing genes and preparing pooled Golden Gate cloning oligos.
+*Scalable gene construction from oligonucleotide pools*
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t-j-fryer/oPool_Optimiser/blob/main/notebooks/oPool_Cloning_Colab.ipynb)
+**oFORGE** — **o**ligo-pool **F**ragmentation, **O**ptimisation and **R**econstruction by **G**olden-gate **E**ngineering
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/t-j-fryer/oFORGE/blob/main/notebooks/oPool_Cloning_Colab.ipynb)
 
 For AI assistant handoff, settings, workflow conventions, and FAQ, see `AI_WORKFLOW_SUMMARY.md`.
 
-## Overview
+## oFORGE Designer
 
-oPool Optimiser turns amino-acid libraries into order-ready oligonucleotides for pooled Golden Gate assembly. It codon-optimizes each gene, removes forbidden Type IIS sites, chooses synonymous split sites and high-fidelity overhangs, assigns genes to compatible sub-pools, and adds sub-pool-specific primer and assembly sequences.
+The computational tool that optimises sequences, chooses split sites and overhangs, assigns sub-pools, and produces synthesis-ready oligos. Starting from amino-acid libraries or pre-optimised DNA, oFORGE Designer removes forbidden Type IIS sites, makes translation-preserving synonymous changes where needed, and adds the primer and assembly sequences required to order the library.
 
-![Computational oPool workflow: gene optimization, split-site and sub-pool assignment, and primer/constant-region addition](docs/images/opool_computational_workflow.png)
+![oFORGE Designer workflow: gene optimisation, split-site and sub-pool assignment, and primer/constant-region addition](docs/images/opool_computational_workflow.png)
+
+## oFORGE assembly
+
+The wet-lab workflow: selective sub-pool PCR → Golden Gate → transformation.
 
 **A single oPool is selectively amplified into many defined sub-pools.** The pooled DNA is handled only once: a small aliquot is added directly to a shared PCR master mix, which is distributed across wells containing sub-pool-specific primers. This minimizes consumption and pipetting of the original synthesis pool while allowing hundreds of independent assemblies to be generated in parallel.
 
-![Wet-lab oPool workflow: sub-pool-specific amplification, multiplexed Golden Gate assembly, and transformation](docs/images/opool_wet_lab_workflow.png)
+![oFORGE assembly workflow: sub-pool-specific amplification, multiplexed Golden Gate assembly, and transformation](docs/images/opool_wet_lab_workflow.png)
+
+## Why pooled construction?
 
 Pooled oligonucleotide synthesis can substantially reduce DNA and assembly costs as library size increases, especially when longer genes can be assembled from multiple fragments within the same workflow.
 
@@ -105,10 +113,11 @@ Transform each Golden Gate assembly independently so that the sub-pool identity 
 
 ## Repository Layout
 
-- `notebooks/oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb`: modular notebook with the faster long-gene pool search
-- `notebooks/oPool_Cloning_Notebook_Simple.ipynb`: edit one input cell, then choose **Run All**
-- `notebooks/oPool_Cloning_Colab.ipynb`: one-click hosted workflow with file upload and ZIP download
-- `scripts/opool_cli.py`: terminal command-line interface
+- `notebooks/oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb`: advanced modular oFORGE Designer notebook
+- `notebooks/oPool_Cloning_Notebook_Simple.ipynb`: oFORGE Designer notebook; edit one input cell, then choose **Run All**
+- `notebooks/oPool_Cloning_Colab.ipynb`: one-click hosted oFORGE Designer workflow
+- `scripts/oforge_cli.py`: canonical oFORGE Designer terminal interface
+- `scripts/opool_cli.py`: legacy-compatible terminal entry point
 - `scripts/opool_workflow.py`: shared implementation used by the CLI, simple notebook, and Colab notebook
 - `requirements-colab.txt`: minimal dependencies installed by the hosted notebook
 - `docs/images/`: GitHub- and Colab-ready workflow and cost figures
@@ -117,6 +126,8 @@ Transform each Golden Gate assembly independently so that the sub-pool identity 
 - `data/AAseq_dTF001_dTF016.csv`: bundled example amino-acid library
 - `data/fpbase_top500.csv`: bundled library of 500 fluorescent-protein sequences from FPbase
 - `outputs/`: generated outputs from notebook runs
+
+The existing `oPool_Cloning_*.ipynb`, `opool_cli.py`, and output-file names are retained for backward compatibility. New documentation uses the oFORGE brand and `scripts/oforge_cli.py` as the canonical CLI entry point.
 
 ## Google Colab — no local installation
 
@@ -144,8 +155,8 @@ Every Colab run writes to a new timestamped folder. Compare **Total order oligos
 The same comparison can be run from the terminal, for example:
 
 ```bash
-python scripts/opool_cli.py --input data/fpbase_top500.csv --opool-length 250 --run-name fpbase_250
-python scripts/opool_cli.py --input data/fpbase_top500.csv --opool-length 350 --run-name fpbase_350
+python scripts/oforge_cli.py --input data/fpbase_top500.csv --opool-length 250 --run-name fpbase_250
+python scripts/oforge_cli.py --input data/fpbase_top500.csv --opool-length 350 --run-name fpbase_350
 ```
 
 ### Generating a custom overhang set with NEB GetSet
@@ -155,7 +166,7 @@ Use [NEB GetSet](https://ligasefidelity.neb.com/getset/run.cgi) to generate a hi
 1. Enter the desired number of **internal** overhangs in **Number of Overhangs**. For example, request `32` when you want 32 internal overhangs.
 2. Enter both destination-vector overhangs in **Required Overhangs**—the 5′ and 3′ values used by this workflow. For the default vector, enter `GCTT` and `AGTG`.
 3. Generate the set and copy the returned four-base overhangs. Save them as a CSV or text file, either comma-separated or one overhang per row or column.
-4. Supply that set to oPool Optimiser. It is safe for the file to contain the required vector overhangs: they are recognized and automatically excluded from internal split-site assignment.
+4. Supply that set to oFORGE Designer. It is safe for the file to contain the required vector overhangs: they are recognized and automatically excluded from internal split-site assignment.
 
 Choose the custom set in whichever interface you use:
 
@@ -175,17 +186,17 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
-python -m ipykernel install --user --name opool-cloning --display-name "Python 3 (opool-cloning)"
+python -m ipykernel install --user --name oforge --display-name "Python 3 (oFORGE)"
 ```
 
-Then in Jupyter, choose kernel: `Python 3 (opool-cloning)`.
+Then in Jupyter, choose kernel: `Python 3 (oFORGE)`.
 
 ### Option B: Conda/Mamba
 
 ```bash
 conda env create -f environment.yml
-conda activate opool-cloning
-python -m ipykernel install --user --name opool-cloning --display-name "Python 3 (opool-cloning)"
+conda activate oforge
+python -m ipykernel install --user --name oforge --display-name "Python 3 (oFORGE)"
 ```
 
 ## Simplest notebook workflow
@@ -201,7 +212,7 @@ Open `notebooks/oPool_Cloning_Notebook_Simple.ipynb`, edit its single **User inp
 After installing the environment, this command runs the complete workflow with the bundled files in `data/`:
 
 ```bash
-python scripts/opool_cli.py
+python scripts/oforge_cli.py
 ```
 
 The example outputs are written to `outputs/`. Existing files are protected, so a second run will stop rather than silently replace them.
@@ -209,7 +220,7 @@ The example outputs are written to `outputs/`. Existing files are protected, so 
 For a real project, only the input normally needs to change. The input can be either an amino-acid CSV or an existing optimized-DNA CSV; its format is detected automatically. Headered amino-acid CSVs may use `name` with either `aa_seq` or `amino_acid_sequence`:
 
 ```bash
-python scripts/opool_cli.py --input "/path/to/amino_acids.csv"
+python scripts/oforge_cli.py --input "/path/to/amino_acids.csv"
 ```
 
 ### Defaults
@@ -232,7 +243,7 @@ The two inventory paths are resolved from the repository, even if the command is
 Override only the settings your assembly requires. For example:
 
 ```bash
-python scripts/opool_cli.py \
+python scripts/oforge_cli.py \
   --input "/path/to/optimized_dna.csv" \
   --opool-length 350 \
   --vector-oh1 TATG \
@@ -243,7 +254,7 @@ python scripts/opool_cli.py \
 Run this for all options and their defaults:
 
 ```bash
-python scripts/opool_cli.py --help
+python scripts/oforge_cli.py --help
 ```
 
 For external inputs, outputs are written beside the input file by default. Choose a different `--run-name`/`--output-dir`, or explicitly pass `--force` to replace existing outputs.
@@ -279,7 +290,7 @@ Either the short keyword or full table name is accepted. Alternatively, use a nu
 
 ## Acknowledgements and references
 
-oPool Optimiser builds on the open-source scientific Python ecosystem. In particular:
+oFORGE builds on the open-source scientific Python ecosystem. In particular:
 
 - Gene optimization uses [DnaChisel](https://github.com/Edinburgh-Genome-Foundry/DnaChisel): Zulkower V, Rosser S. “DNA Chisel, a versatile sequence optimizer.” *Bioinformatics* 36(16), 4508–4509 (2020). [doi:10.1093/bioinformatics/btaa558](https://doi.org/10.1093/bioinformatics/btaa558).
 - Sequence representation, translation, and reverse-complement operations use [Biopython](https://biopython.org/): Cock PJA et al. “Biopython: freely available Python tools for computational molecular biology and bioinformatics.” *Bioinformatics* 25(11), 1422–1423 (2009). [doi:10.1093/bioinformatics/btp163](https://doi.org/10.1093/bioinformatics/btp163).
@@ -289,8 +300,8 @@ oPool Optimiser builds on the open-source scientific Python ecosystem. In partic
 - The hosted notebook runs on [Google Colab](https://colab.research.google.com/).
 - The bundled overhang inventory is intended for use with experimentally informed Golden Gate overhang selection. [NEB GetSet](https://ligasefidelity.neb.com/getset/run.cgi) generates compatible high-fidelity junction sets from required vector overhangs; NEB also provides broader [Ligase Fidelity tools](https://www.neb.com/en-us/applications/cloning-and-synthetic-biology/dna-assembly-and-cloning/golden-gate-assembly/ligase-fidelity).
 
-These projects and services retain their own licenses and trademarks. oPool Optimiser is not affiliated with or endorsed by their maintainers or providers.
+These projects and services retain their own licenses and trademarks. oFORGE is not affiliated with or endorsed by their maintainers or providers.
 
 ## License
 
-oPool Optimiser is released under the [MIT License](LICENSE).
+oFORGE is released under the [MIT License](LICENSE).

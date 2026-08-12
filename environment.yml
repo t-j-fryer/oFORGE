@@ -1,4 +1,4 @@
-name: opool-cloning
+name: oforge
 channels:
   - conda-forge
 dependencies:
