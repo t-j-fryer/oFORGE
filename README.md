@@ -6,6 +6,66 @@ Fast, user-friendly workflows for optimizing genes and preparing pooled Golden G
 
 For AI assistant handoff, settings, workflow conventions, and FAQ, see `AI_WORKFLOW_SUMMARY.md`.
 
+## Overview
+
+oPool Optimiser turns amino-acid libraries into order-ready oligonucleotides for pooled Golden Gate assembly. It codon-optimizes each gene, removes forbidden Type IIS sites, chooses synonymous split sites and high-fidelity overhangs, assigns genes to compatible sub-pools, and adds sub-pool-specific primer and assembly sequences.
+
+![Computational oPool workflow: gene optimization, split-site and sub-pool assignment, and primer/constant-region addition](docs/images/opool_computational_workflow.png)
+
+**A single oPool is selectively amplified into many defined sub-pools.** The pooled DNA is handled only once: a small aliquot is added directly to a shared PCR master mix, which is distributed across wells containing sub-pool-specific primers. This minimizes consumption and pipetting of the original synthesis pool while allowing hundreds of independent assemblies to be generated in parallel.
+
+![Wet-lab oPool workflow: sub-pool-specific amplification, multiplexed Golden Gate assembly, and transformation](docs/images/opool_wet_lab_workflow.png)
+
+Pooled oligonucleotide synthesis can substantially reduce DNA and assembly costs as library size increases, especially when longer genes can be assembled from multiple fragments within the same workflow.
+
+![Illustrative comparison of pooled and commercial gene-synthesis costs across library sizes](docs/images/pooled_library_cost_comparison.png)
+
+*Illustrative project cost analysis; actual prices depend on supplier, synthesis scale, oligo length, and assembly assumptions. Confirm current pricing before making purchasing decisions.*
+
+## Wet-lab protocol: sub-pool-specific oPool amplification
+
+On receipt, resuspend the oligonucleotide pool in approximately **15 µL nuclease-free water**. Only a small fraction of the pool is required for amplification: we routinely use **3 µL of the resuspended oPool DNA in one shared PCR master mix**, which has been sufficient for up to **four 96-well plates (384 sub-pool PCRs)**.
+
+To minimize handling and loss of the pooled DNA, **do not pipette oPool DNA individually into each PCR well**. Instead, add the 3 µL oPool aliquot once to the common Q5 master mix, mix thoroughly, and distribute this master mix across wells containing the appropriate sub-pool-specific primer pairs.
+
+### PCR setup
+
+For each 25 µL reaction:
+
+| Component | Volume |
+| --- | ---: |
+| Q5 Hot Start 2× Master Mix | 12.5 µL |
+| Forward primer, 10 µM | 1.25 µL |
+| Reverse primer, 10 µM | 1.25 µL |
+| Shared oPool-containing master mix | included below |
+| Nuclease-free water | to 25 µL |
+
+For **N reactions**, prepare the shared master mix as follows:
+
+| Component | Amount |
+| --- | ---: |
+| Q5 Hot Start 2× Master Mix | 12.5 × N µL |
+| Resuspended oPool DNA | **3 µL total** |
+| Nuclease-free water | 10 × N − 3 µL |
+| **Master mix dispensed per well** | **22.5 µL** |
+
+Dispense **22.5 µL** master mix into each well containing **1.25 µL forward primer + 1.25 µL reverse primer**.
+
+In practice, prepare a modest excess of Q5 master mix and water to account for pipetting losses, while retaining **3 µL total oPool DNA** rather than scaling the amount of template with reaction number.
+
+### PCR program
+
+| Step | Temperature | Time | Cycles |
+| --- | ---: | ---: | ---: |
+| Initial denaturation | 98 °C | 30 s | 1 |
+| Denaturation | 98 °C | 10 s | |
+| Annealing | 58 °C | 10 s | **40** |
+| Extension | 72 °C | 10 s | |
+| Final extension | 72 °C | 2 min | 1 |
+| Hold | 4 °C | ∞ | — |
+
+Following amplification, purify PCR products using **1.8× PCRClean DX beads**. Concentration normalization of individual sub-pool PCR products is not required before Golden Gate assembly.
+
 ## Repository Layout
 
 - `notebooks/oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb`: modular notebook with the faster long-gene pool search
@@ -14,6 +74,7 @@ For AI assistant handoff, settings, workflow conventions, and FAQ, see `AI_WORKF
 - `scripts/opool_cli.py`: terminal command-line interface
 - `scripts/opool_workflow.py`: shared implementation used by the CLI, simple notebook, and Colab notebook
 - `requirements-colab.txt`: minimal dependencies installed by the hosted notebook
+- `docs/images/`: GitHub- and Colab-ready workflow and cost figures
 - `data/orthogonal_oligos.csv`: default primer inventory
 - `data/overhangs.csv`: default overhang inventory
 - `data/AAseq_dTF001_dTF016.csv`: bundled example amino-acid library

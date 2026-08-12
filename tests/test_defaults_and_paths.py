@@ -111,6 +111,11 @@ class DefaultAndPathTests(unittest.TestCase):
             for cell in notebook["cells"]
             if cell["cell_type"] == "code"
         )
+        markdown = "\n".join(
+            "".join(cell.get("source", []))
+            for cell in notebook["cells"]
+            if cell["cell_type"] == "markdown"
+        )
 
         self.assertEqual(notebook["nbformat"], 4)
         self.assertTrue(notebook["metadata"]["colab"]["include_colab_link"])
@@ -130,12 +135,35 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn('"Total order oligos"', code)
         self.assertIn("subpool_summary", code)
         self.assertIn("WorkflowConfig(", code)
+        self.assertIn("docs/images/opool_computational_workflow.png", markdown)
+        self.assertIn("docs/images/opool_wet_lab_workflow.png", markdown)
+        self.assertIn("3 µL total oPool DNA", markdown)
 
         for cell in notebook["cells"]:
             if cell["cell_type"] == "code":
                 self.assertIsNone(cell["execution_count"])
                 self.assertEqual(cell["outputs"], [])
                 compile("".join(cell["source"]), str(notebook_path), "exec")
+
+    def test_readme_workflow_images_and_shared_template_protocol(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text()
+        image_names = (
+            "opool_computational_workflow.png",
+            "opool_wet_lab_workflow.png",
+            "pooled_library_cost_comparison.png",
+        )
+
+        for image_name in image_names:
+            image_path = REPO_ROOT / "docs" / "images" / image_name
+            with self.subTest(image=image_name):
+                self.assertTrue(image_path.is_file())
+                self.assertTrue(image_path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n"))
+                self.assertIn(f"docs/images/{image_name}", readme)
+
+        self.assertIn("3 µL total", readme)
+        self.assertIn("384 sub-pool PCRs", readme)
+        self.assertIn("12.5 × N µL", readme)
+        self.assertIn("10 × N − 3 µL", readme)
 
     def test_colab_requirements_exclude_notebook_environment_packages(self) -> None:
         requirements = (REPO_ROOT / "requirements-colab.txt").read_text().lower()
