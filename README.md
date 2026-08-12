@@ -163,7 +163,7 @@ python scripts/oforge_cli.py --input data/fpbase_top500.csv --opool-length 350 -
 
 Use [NEB GetSet](https://ligasefidelity.neb.com/getset/run.cgi) to generate a high-fidelity overhang set compatible with the destination vector:
 
-1. Enter the desired number of **internal** overhangs in **Number of Overhangs**. For example, request `32` when you want 32 internal overhangs.
+1. Enter the desired number of **internal** overhangs plus your number of **Vector Overhangs** in **Number of Overhangs**. For example, request `34` when you want 32 internal overhangs with 2 vector overhangs.
 2. Enter both destination-vector overhangs in **Required Overhangs**—the 5′ and 3′ values used by this workflow. For the default vector, enter `GCTT` and `AGTG`.
 3. Generate the set and copy the returned four-base overhangs. Save them as a CSV or text file, either comma-separated or one overhang per row or column.
 4. Supply that set to oFORGE Designer. It is safe for the file to contain the required vector overhangs: they are recognized and automatically excluded from internal split-site assignment.
