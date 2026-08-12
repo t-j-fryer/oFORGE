@@ -7,7 +7,18 @@ import argparse
 import sys
 from pathlib import Path
 
-from opool_workflow import BUILTIN_CODON_SPECIES, WorkflowConfig, run_workflow
+from opool_workflow import (
+    BUILTIN_CODON_SPECIES,
+    WorkflowConfig,
+    run_workflow,
+)
+
+
+class HelpFormatter(
+    argparse.ArgumentDefaultsHelpFormatter,
+    argparse.RawDescriptionHelpFormatter,
+):
+    """Show readable multi-line examples together with argument defaults."""
 
 
 def positive_integer(value: str) -> int:
@@ -43,21 +54,25 @@ def build_parser() -> argparse.ArgumentParser:
             "orthogonal primers/Type IIS elements. Input may be a two-column "
             "amino-acid CSV or an existing *_Optimised.csv file."
         ),
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        formatter_class=HelpFormatter,
         epilog=(
-            "Example:\n"
-            "  python scripts/opool_cli.py --input /path/opTF010_Optimised.csv "
-            "--overhangs /path/overhangs_bgal.csv --opool-length 350 "
-            "--vector-oh1 TATG --vector-oh2 GGAT --genes-per-subpool 1 --force"
+            "Examples:\n"
+            "  python scripts/opool_cli.py\n"
+            "  python scripts/opool_cli.py --input /path/to/amino_acids.csv\n"
+            "  python scripts/opool_cli.py --input /path/to/optimized_dna.csv "
+            "--opool-length 350 --vector-oh1 TATG --vector-oh2 GGAT"
         ),
     )
 
     essentials = parser.add_argument_group("essential inputs")
     essentials.add_argument(
         "--input",
-        required=True,
         type=Path,
-        help="Amino-acid CSV or optimized CSV; type is detected automatically.",
+        default=Path("data/example_amino_acids.csv"),
+        help=(
+            "Amino-acid CSV or optimized CSV; type is detected automatically. "
+            "With no value, the bundled example in data/ is used."
+        ),
     )
     essentials.add_argument(
         "--opool-length",
@@ -68,8 +83,8 @@ def build_parser() -> argparse.ArgumentParser:
     essentials.add_argument(
         "--overhangs",
         type=Path,
-        default=None,
-        help="Overhang inventory CSV; defaults to data/overhangs.csv.",
+        default=Path("data/overhangs.csv"),
+        help="Overhang inventory CSV. Repo-relative paths work from any directory.",
     )
     essentials.add_argument(
         "--vector-oh1",
@@ -96,8 +111,17 @@ def build_parser() -> argparse.ArgumentParser:
         default="auto",
         help="Override automatic input detection.",
     )
-    outputs.add_argument("--output-dir", type=Path, default=None, help="Output directory; defaults beside input.")
-    outputs.add_argument("--run-name", default=None, help="Output filename prefix; defaults to input folder name.")
+    outputs.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Output directory; defaults to outputs/ for bundled data, otherwise beside input.",
+    )
+    outputs.add_argument(
+        "--run-name",
+        default=None,
+        help="Output filename prefix; defaults to the bundled input stem or project folder name.",
+    )
     outputs.add_argument("--force", action="store_true", help="Overwrite existing outputs.")
     outputs.add_argument("--quiet", action="store_true", help="Hide progress messages.")
 
@@ -105,9 +129,9 @@ def build_parser() -> argparse.ArgumentParser:
     assembly.add_argument(
         "--short-pool-max-size",
         type=optional_positive_integer,
-        default=1000,
+        default=None,
         metavar="N|unlimited",
-        help="Separate cap for single-fragment genes.",
+        help="Optional separate cap for single-fragment genes.",
     )
     assembly.add_argument("--max-fragments", type=positive_integer, default=32)
     assembly.add_argument(
@@ -122,8 +146,8 @@ def build_parser() -> argparse.ArgumentParser:
     primers.add_argument(
         "--primers",
         type=Path,
-        default=None,
-        help="Orthogonal-primer CSV; defaults to data/orthogonal_oligos.csv.",
+        default=Path("data/orthogonal_oligos.csv"),
+        help="Orthogonal-primer CSV. Repo-relative paths work from any directory.",
     )
     primers.add_argument(
         "--primer-mode",

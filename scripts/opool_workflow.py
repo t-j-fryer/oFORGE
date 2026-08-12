@@ -34,6 +34,9 @@ from python_codon_tables import available_codon_tables_names
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
+DEFAULT_INPUT_PATH = DATA_DIR / "example_amino_acids.csv"
+DEFAULT_OVERHANGS_PATH = DATA_DIR / "overhangs.csv"
+DEFAULT_PRIMERS_PATH = DATA_DIR / "orthogonal_oligos.csv"
 DNA_BASES = set("ACGT")
 BUILTIN_CODON_SPECIES = tuple(sorted({
     "_".join(table_name.split("_")[:-1])
@@ -44,6 +47,25 @@ BUILTIN_CODON_TABLES = frozenset(available_codon_tables_names)
 
 def _path(value: str | Path | None) -> Path | None:
     return None if value is None else Path(value).expanduser()
+
+
+def _resolve_input_path(path: Path) -> Path:
+    """Resolve bundled repo paths independently of the caller's working directory."""
+    if path.is_absolute():
+        return path.resolve()
+
+    cwd_candidate = (Path.cwd() / path).resolve()
+    repo_candidate = (PROJECT_ROOT / path).resolve()
+
+    # Explicit repo paths such as data/example.csv should mean the same thing
+    # from the repository root, its parent directory, a notebook, or a shell.
+    if path.parts and path.parts[0] in {"data", "outputs", "notebooks", "scripts"}:
+        return repo_candidate
+    if cwd_candidate.exists():
+        return cwd_candidate
+    if repo_candidate.exists():
+        return repo_candidate
+    return cwd_candidate
 
 
 def _normalize_dna(value: str, label: str, exact_length: int | None = None) -> str:
@@ -67,14 +89,14 @@ class WorkflowConfig:
     input_kind: str = "auto"  # auto, aa, optimized
     output_dir: str | Path | None = None
     run_name: str | None = None
-    overhangs_path: str | Path | None = None
-    primers_path: str | Path | None = None
+    overhangs_path: str | Path | None = DEFAULT_OVERHANGS_PATH
+    primers_path: str | Path | None = DEFAULT_PRIMERS_PATH
 
     opool_length: int = 250
     genes_per_subpool: int | None = None
     vector_oh1: str = "GCTT"
     vector_oh2: str = "AGTG"
-    short_pool_max_size: int | None = 1000
+    short_pool_max_size: int | None = None
     max_fragments: int = 32
     strip_nterm_met: bool = True
 
@@ -107,7 +129,10 @@ class WorkflowConfig:
     force: bool = False
 
     def __post_init__(self) -> None:
-        self.input_path = _path(self.input_path)
+        input_path = _path(self.input_path)
+        if input_path is None:
+            raise ValueError("input_path cannot be empty.")
+        self.input_path = _resolve_input_path(input_path)
         self.output_dir = _path(self.output_dir)
         self.overhangs_path = _path(self.overhangs_path)
         self.primers_path = _path(self.primers_path)
@@ -257,7 +282,10 @@ def _resolve_inventory(path: Path | None, default_name: str) -> Path:
         result = PROJECT_ROOT / path
     result = result.resolve()
     if not result.is_file():
-        raise FileNotFoundError(f"Inventory file not found: {result}")
+        raise FileNotFoundError(
+            f"Inventory file not found: {result}. "
+            f"Use an absolute path, a repo-relative path, or a filename from {DATA_DIR}."
+        )
     return result
 
 
