@@ -110,6 +110,20 @@ class DefaultAndPathTests(unittest.TestCase):
                 for token in forbidden_tokens:
                     self.assertNotIn(token, contents)
 
+    def test_getset_guidance_counts_internal_and_vector_overhangs(self) -> None:
+        documented_notebooks = (
+            "oPool_Cloning_Notebook_Simple.ipynb",
+            "oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb",
+            "oPool_Cloning_Colab.ipynb",
+        )
+        for filename in documented_notebooks:
+            with self.subTest(notebook=filename):
+                contents = (REPO_ROOT / "notebooks" / filename).read_text().replace("`", "")
+                self.assertIn("34 for 32 internal and two vector overhangs", contents)
+
+        workflow_guide = (REPO_ROOT / "AI_WORKFLOW_SUMMARY.md").read_text()
+        self.assertIn("enter `34` for 32 internal and two vector overhangs", workflow_guide)
+
     def test_colab_notebook_is_self_contained_and_output_free(self) -> None:
         notebook_path = REPO_ROOT / "notebooks" / "oPool_Cloning_Colab.ipynb"
         notebook = json.loads(notebook_path.read_text())
@@ -150,6 +164,7 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("docs/images/opool_wet_lab_workflow.png", markdown)
         self.assertIn("3 µL total oPool DNA", markdown)
         self.assertIn("https://ligasefidelity.neb.com/getset/run.cgi", markdown)
+        self.assertIn("enter `34` for 32 internal and two vector overhangs", markdown)
         self.assertIn("# oFORGE Designer — Google Colab", markdown)
         self.assertIn("oFORGE assembly", markdown)
 
@@ -182,6 +197,7 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("90 alternating cycles", readme)
         self.assertIn("sub-pool-specific transformation", readme.lower())
         self.assertIn("https://ligasefidelity.neb.com/getset/run.cgi", readme)
+        self.assertIn("request `34` when you want 32 internal overhangs with 2 vector overhangs", readme)
         self.assertTrue(readme.startswith("# oFORGE\n"))
         self.assertIn("Scalable gene construction from oligonucleotide pools", readme)
         self.assertIn("**o**ligo-pool **F**ragmentation", readme)
