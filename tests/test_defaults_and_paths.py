@@ -7,6 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pandas as pd
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
@@ -15,7 +17,9 @@ from opool_cli import build_parser, config_from_args  # noqa: E402
 from opool_workflow import (  # noqa: E402
     DATA_DIR,
     DEFAULT_INPUT_PATH,
+    PoolAssigner,
     RunPaths,
+    WorkflowConfig,
     _read_aa_input,
     _resolve_inventory,
 )
@@ -129,6 +133,9 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("files.download", code)
         self.assertIn("SAVE_TO_GOOGLE_DRIVE = False", code)
         self.assertIn("USE_BUNDLED_DATASET = True", code)
+        self.assertIn("USE_CUSTOM_OVERHANGS = False", code)
+        self.assertIn('CUSTOM_OVERHANGS_TEXT = ""', code)
+        self.assertIn("Select the custom GetSet overhang CSV/TXT", code)
         self.assertIn('BUNDLED_DATASET = "AAseq_dTF001_dTF016.csv"', code)
         self.assertIn('OPOOL_LENGTH = 250  # @param {type:"slider", min:250, max:350, step:10}', code)
         self.assertIn("GENES_PER_SUBPOOL = 0", code)
@@ -138,6 +145,7 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("docs/images/opool_computational_workflow.png", markdown)
         self.assertIn("docs/images/opool_wet_lab_workflow.png", markdown)
         self.assertIn("3 µL total oPool DNA", markdown)
+        self.assertIn("https://ligasefidelity.neb.com/getset/run.cgi", markdown)
 
         for cell in notebook["cells"]:
             if cell["cell_type"] == "code":
@@ -164,6 +172,37 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("384 sub-pool PCRs", readme)
         self.assertIn("12.5 × N µL", readme)
         self.assertIn("10 × N − 3 µL", readme)
+        self.assertIn("BsaI-HFv2", readme)
+        self.assertIn("90 alternating cycles", readme)
+        self.assertIn("sub-pool-specific transformation", readme.lower())
+        self.assertIn("https://ligasefidelity.neb.com/getset/run.cgi", readme)
+
+        cost_png = (REPO_ROOT / "docs" / "images" / "pooled_library_cost_comparison.png").read_bytes()
+        self.assertEqual(cost_png[12:16], b"IHDR")
+        self.assertEqual(cost_png[25], 2, "Cost figure must be opaque RGB for GitHub dark mode")
+
+    def test_custom_overhang_layout_accepts_and_excludes_vector_overhangs(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            overhangs_path = root / "getset_overhangs.csv"
+            overhangs_path.write_text("Overhang\nGCTT\nAGTG\nCTAA\nCAGA\nGTGA\n")
+            config = WorkflowConfig(
+                input_path=DEFAULT_INPUT_PATH,
+                output_dir=root / "outputs",
+                overhangs_path=overhangs_path,
+                vector_oh1="GCTT",
+                vector_oh2="AGTG",
+            )
+            assigner = PoolAssigner(
+                config,
+                RunPaths.from_config(config),
+                pd.DataFrame(columns=["name", "dna_seq_optimized"]),
+                overhangs_path,
+            )
+
+            self.assertEqual(assigner.overhangs, ["GCTT", "AGTG", "CTAA", "CAGA", "GTGA"])
+            self.assertEqual(assigner.excluded_vector_overhangs, ["GCTT", "AGTG"])
+            self.assertEqual(assigner.internal_overhangs, ["CTAA", "CAGA", "GTGA"])
 
     def test_colab_requirements_exclude_notebook_environment_packages(self) -> None:
         requirements = (REPO_ROOT / "requirements-colab.txt").read_text().lower()

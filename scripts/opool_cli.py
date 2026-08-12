@@ -84,7 +84,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--overhangs",
         type=Path,
         default=Path("data/overhangs.csv"),
-        help="Overhang inventory CSV. Repo-relative paths work from any directory.",
+        help=(
+            "Internal-overhang CSV/TXT. Values may be comma-separated or one per "
+            "row/column; configured vector overhangs are excluded automatically."
+        ),
     )
     essentials.add_argument(
         "--vector-oh1",

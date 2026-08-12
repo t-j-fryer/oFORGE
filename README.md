@@ -22,7 +22,9 @@ Pooled oligonucleotide synthesis can substantially reduce DNA and assembly costs
 
 *Illustrative project cost analysis; actual prices depend on supplier, synthesis scale, oligo length, and assembly assumptions. Confirm current pricing before making purchasing decisions.*
 
-## Wet-lab protocol: sub-pool-specific oPool amplification
+## Wet-lab protocol
+
+### 1. Sub-pool-specific oPool amplification
 
 On receipt, resuspend the oligonucleotide pool in approximately **15 µL nuclease-free water**. Only a small fraction of the pool is required for amplification: we routinely use **3 µL of the resuspended oPool DNA in one shared PCR master mix**, which has been sufficient for up to **four 96-well plates (384 sub-pool PCRs)**.
 
@@ -65,6 +67,41 @@ In practice, prepare a modest excess of Q5 master mix and water to account for p
 | Hold | 4 °C | ∞ | — |
 
 Following amplification, purify PCR products using **1.8× PCRClean DX beads**. Concentration normalization of individual sub-pool PCR products is not required before Golden Gate assembly.
+
+### 2. Multiplexed Golden Gate assembly
+
+Fragments belonging to each sub-pool are assembled together with the compatible destination vector using BsaI-HFv2 and T4 DNA ligase.
+
+#### Golden Gate reaction
+
+| Component | Amount per 20 µL reaction |
+| --- | ---: |
+| T4 DNA Ligase Buffer, 10× | 2.0 µL |
+| BsaI-HFv2 | 1.2 µL |
+| T4 DNA Ligase | 0.4 µL |
+| Destination vector | 50 ng |
+| oPool PCR product | 0.5 µL |
+| Nuclease-free water | to 20 µL |
+| **Total volume** | **20 µL** |
+
+No concentration normalization of individual oPool PCR products is required before assembly.
+
+#### Golden Gate program
+
+| Step | Temperature | Time | Cycles |
+| --- | ---: | ---: | ---: |
+| Digestion | 37 °C | 5 min | |
+| Ligation | 16 °C | 5 min | **90 alternating cycles** |
+| Final incubation | 65 °C | 5 min | 1 |
+| Hold | 4 °C | ∞ | — |
+
+Alternate the 37 °C digestion and 16 °C ligation steps for 90 cycles before the final 65 °C incubation.
+
+### 3. Sub-pool-specific transformation
+
+Transform each Golden Gate assembly independently so that the sub-pool identity of recovered colonies is retained. This coarse positional information greatly reduces the search space when individual constructs are subsequently picked, sequenced, and matched to their intended reference sequence.
+
+> **Overall experimental workflow:** oPool → sub-pool-specific PCR → PCR cleanup → multiplexed Golden Gate assembly → separate sub-pool transformations → colony recovery
 
 ## Repository Layout
 
@@ -110,6 +147,24 @@ The same comparison can be run from the terminal, for example:
 python scripts/opool_cli.py --input data/fpbase_top500.csv --opool-length 250 --run-name fpbase_250
 python scripts/opool_cli.py --input data/fpbase_top500.csv --opool-length 350 --run-name fpbase_350
 ```
+
+### Generating a custom overhang set with NEB GetSet
+
+Use [NEB GetSet](https://ligasefidelity.neb.com/getset/run.cgi) to generate a high-fidelity overhang set compatible with the destination vector:
+
+1. Enter the desired number of **internal** overhangs in **Number of Overhangs**. For example, request `32` when you want 32 internal overhangs.
+2. Enter both destination-vector overhangs in **Required Overhangs**—the 5′ and 3′ values used by this workflow. For the default vector, enter `GCTT` and `AGTG`.
+3. Generate the set and copy the returned four-base overhangs. Save them as a CSV or text file, either comma-separated or one overhang per row or column.
+4. Supply that set to oPool Optimiser. It is safe for the file to contain the required vector overhangs: they are recognized and automatically excluded from internal split-site assignment.
+
+Choose the custom set in whichever interface you use:
+
+- **Colab:** set `USE_CUSTOM_OVERHANGS = True`. Paste the GetSet values into `CUSTOM_OVERHANGS_TEXT`, or leave that field blank to upload the CSV/TXT when prompted.
+- **Simple notebook:** set `OVERHANGS_FILE` to the custom CSV/TXT path in the single user-input cell.
+- **Fast modular notebook:** set `OVERHANGS_PATH` to the custom CSV/TXT path in the first user-input cell.
+- **CLI:** pass `--overhangs "/path/to/custom_overhangs.csv"` together with the matching `--vector-oh1` and `--vector-oh2` values.
+
+The workflow prints the number of supplied overhangs, the number available for internal junctions, and any vector overhangs it excluded. Keep the vector-overhang settings synchronized with the values entered in GetSet.
 
 ## Python Environment + Kernel
 
@@ -232,7 +287,7 @@ oPool Optimiser builds on the open-source scientific Python ecosystem. In partic
 - The bundled fluorescent-protein library was sourced from [FPbase](https://www.fpbase.org/): Lambert TJ. “FPbase: a community-editable fluorescent protein database.” *Nature Methods* 16, 277–278 (2019). [doi:10.1038/s41592-019-0352-8](https://doi.org/10.1038/s41592-019-0352-8). Individual proteins may have additional primary references listed by FPbase.
 - Data handling and numerical operations use [pandas](https://pandas.pydata.org/) and [NumPy](https://numpy.org/).
 - The hosted notebook runs on [Google Colab](https://colab.research.google.com/).
-- The bundled overhang inventory is intended for use with experimentally informed Golden Gate overhang selection. [NEB’s Ligase Fidelity tools](https://www.neb.com/en-us/applications/cloning-and-synthetic-biology/dna-assembly-and-cloning/golden-gate-assembly/ligase-fidelity) are a useful source for evaluating or generating compatible high-fidelity junction sets.
+- The bundled overhang inventory is intended for use with experimentally informed Golden Gate overhang selection. [NEB GetSet](https://ligasefidelity.neb.com/getset/run.cgi) generates compatible high-fidelity junction sets from required vector overhangs; NEB also provides broader [Ligase Fidelity tools](https://www.neb.com/en-us/applications/cloning-and-synthetic-biology/dna-assembly-and-cloning/golden-gate-assembly/ligase-fidelity).
 
 These projects and services retain their own licenses and trademarks. oPool Optimiser is not affiliated with or endorsed by their maintainers or providers.
 
