@@ -240,16 +240,19 @@ python scripts/oforge_cli.py --input "/path/to/amino_acids.csv"
 
 The two inventory paths are resolved from the repository, even if the command is launched from another directory. Relative project input paths are resolved from the current directory; paths beginning with `data/` always refer to this repository's bundled data.
 
-Override only the settings your assembly requires. For example:
+Override only the settings your assembly requires. The following is a fully explicit example using non-default vector overhangs. First generate a custom overhang set with NEB GetSet using `TATG` and `GGAT` in **Required Overhangs**, then save that set as `/path/to/custom_overhangs.csv`:
 
 ```bash
 python scripts/oforge_cli.py \
   --input "/path/to/optimized_dna.csv" \
   --opool-length 350 \
+  --overhangs "/path/to/custom_overhangs.csv" \
   --vector-oh1 TATG \
   --vector-oh2 GGAT \
   --genes-per-subpool 1
 ```
+
+This command uses `TATG` and `GGAT` as the 5′ and 3′ vector overhangs, respectively; selects internal junctions from the matching custom overhang file; produces final synthesis oligos that are 350 nt long, including primer and assembly elements; and assigns exactly one gene to each sub-pool. The vector overhangs may be present in the custom GetSet file because oFORGE excludes them automatically from internal split-site assignment.
 
 Run this for all options and their defaults:
 
