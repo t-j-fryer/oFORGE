@@ -19,7 +19,7 @@ The Colab notebook is also a thin front end over `scripts/opool_workflow.py`. It
 ## Bundled defaults
 
 ```yaml
-input: data/example_amino_acids.csv
+input: data/AAseq_dTF001_dTF016.csv
 overhang_inventory: data/overhangs.csv
 primer_inventory: data/orthogonal_oligos.csv
 output_directory_for_bundled_input: outputs/

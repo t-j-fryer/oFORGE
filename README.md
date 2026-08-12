@@ -16,14 +16,14 @@ For AI assistant handoff, settings, workflow conventions, and FAQ, see `AI_WORKF
 - `requirements-colab.txt`: minimal dependencies installed by the hosted notebook
 - `data/orthogonal_oligos.csv`: default primer inventory
 - `data/overhangs.csv`: default overhang inventory
-- `data/example_amino_acids.csv`: small bundled example amino-acid input
+- `data/AAseq_dTF001_dTF016.csv`: bundled example amino-acid library
 - `outputs/`: generated outputs from notebook runs
 
 ## Google Colab — no local installation
 
 Click the **Open in Colab** badge above, edit the single **User settings** cell, and choose **Runtime → Run all**.
 
-- Leave `USE_BUNDLED_EXAMPLE = True` for a quick two-sequence test.
+- Leave `USE_BUNDLED_EXAMPLE = True` to run the bundled amino-acid library.
 - Set it to `False` to upload one amino-acid or optimized-DNA CSV when prompted.
 - The tracked `data/overhangs.csv` and `data/orthogonal_oligos.csv` inventories are used automatically.
 - `GENES_PER_SUBPOOL = 0` means automatic packing with no fixed gene-count limit.
@@ -83,7 +83,7 @@ python scripts/opool_cli.py --input "/path/to/amino_acids.csv"
 
 | Setting | Default |
 | --- | --- |
-| Input | `data/example_amino_acids.csv` |
+| Input | `data/AAseq_dTF001_dTF016.csv` |
 | Internal overhangs | `data/overhangs.csv` |
 | Orthogonal primers | `data/orthogonal_oligos.csv` |
 | Oligo length | 250 nt |
@@ -156,3 +156,7 @@ oPool Optimiser builds on the open-source scientific Python ecosystem. In partic
 - The bundled overhang inventory is intended for use with experimentally informed Golden Gate overhang selection. [NEB’s Ligase Fidelity tools](https://www.neb.com/en-us/applications/cloning-and-synthetic-biology/dna-assembly-and-cloning/golden-gate-assembly/ligase-fidelity) are a useful source for evaluating or generating compatible high-fidelity junction sets.
 
 These projects and services retain their own licenses and trademarks. oPool Optimiser is not affiliated with or endorsed by their maintainers or providers.
+
+## License
+
+oPool Optimiser is released under the [MIT License](LICENSE).

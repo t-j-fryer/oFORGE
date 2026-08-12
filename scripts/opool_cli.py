@@ -68,7 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
     essentials.add_argument(
         "--input",
         type=Path,
-        default=Path("data/example_amino_acids.csv"),
+        default=Path("data/AAseq_dTF001_dTF016.csv"),
         help=(
             "Amino-acid CSV or optimized CSV; type is detected automatically. "
             "With no value, the bundled example in data/ is used."

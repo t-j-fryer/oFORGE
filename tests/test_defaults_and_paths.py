@@ -47,7 +47,7 @@ class DefaultAndPathTests(unittest.TestCase):
                 os.chdir(tempdir)
                 args = build_parser().parse_args([
                     "--input",
-                    "data/example_amino_acids.csv",
+                    "data/AAseq_dTF001_dTF016.csv",
                     "--overhangs",
                     "data/overhangs.csv",
                     "--primers",
@@ -115,6 +115,7 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertTrue(notebook["metadata"]["colab"]["include_colab_link"])
         self.assertIn("https://github.com/t-j-fryer/oPool_Optimiser.git", code)
         self.assertIn("requirements-colab.txt", code)
+        self.assertIn('PROJECT_ROOT / "data" / "AAseq_dTF001_dTF016.csv"', code)
         self.assertIn('PROJECT_ROOT / "data" / "overhangs.csv"', code)
         self.assertIn('PROJECT_ROOT / "data" / "orthogonal_oligos.csv"', code)
         self.assertIn("files.upload()", code)
@@ -135,6 +136,15 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("biopython", requirements)
         self.assertNotIn("jupyterlab", requirements)
         self.assertNotIn("ipykernel", requirements)
+
+    def test_repository_has_mit_license_and_canonical_example(self) -> None:
+        license_text = (REPO_ROOT / "LICENSE").read_text()
+        self.assertTrue(license_text.startswith("MIT License\n"))
+        self.assertIn("MASSACHUSETTS INSTITUTE OF TECHNOLOGY", license_text)
+        self.assertIn("Permission is hereby granted, free of charge", license_text)
+        self.assertTrue(DEFAULT_INPUT_PATH.is_file())
+        self.assertEqual(DEFAULT_INPUT_PATH.name, "AAseq_dTF001_dTF016.csv")
+        self.assertFalse((DATA_DIR / "example_amino_acids.csv").exists())
 
 
 if __name__ == "__main__":
