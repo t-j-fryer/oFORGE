@@ -28,7 +28,8 @@ class VectorBoundaryRepairTests(unittest.TestCase):
         self.input_path = self.root / "input.csv"
         self.input_path.write_text("name,aa_seq,dna_seq_optimized\n")
         self.overhangs_path = self.root / "overhangs.csv"
-        self.overhangs_path.write_text("CTAA,CAGA,GTGA\n")
+        # GetSet-style inventories may include the required vector overhangs.
+        self.overhangs_path.write_text("GCTT,AGTG,CTAA,CAGA,GTGA\n")
 
     def tearDown(self) -> None:
         self.tempdir.cleanup()

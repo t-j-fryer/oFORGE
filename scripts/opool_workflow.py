@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import bisect
 import math
+import re
 import time
 from dataclasses import dataclass, field
 from itertools import combinations, product
@@ -438,26 +439,31 @@ class PoolAssigner:
         for aa in self.synonyms:
             self.synonyms[aa] = sorted(self.synonyms[aa])
         forbidden_internal = {config.vector_oh1, config.vector_oh2}
+        self.excluded_vector_overhangs = [
+            overhang for overhang in self.overhangs
+            if overhang in forbidden_internal
+        ]
         self.internal_overhangs = [
             overhang for overhang in self.overhangs
             if overhang not in forbidden_internal
         ]
-        if config.vector_oh2 in self.overhangs:
-            raise ValueError("The overhang inventory contains vector_oh2; remove it.")
-        if config.vector_oh1 in self.overhangs:
-            raise ValueError("The overhang inventory contains vector_oh1; remove it.")
+        if not self.internal_overhangs:
+            raise ValueError(
+                "The overhang inventory contains no usable internal overhangs after "
+                "excluding the configured vector overhangs."
+            )
 
     @staticmethod
     def _load_overhangs(path: Path) -> list[str]:
-        df = pd.read_csv(path, header=None)
-        raw = str(df.iloc[0, 0])
-        overhangs = [value.strip().upper() for value in raw.split(",") if value.strip()]
+        text = path.read_text()
+        overhangs = re.findall(r"(?<![A-Z])[ACGT]{4}(?![A-Z])", text.upper())
         if not overhangs:
-            raise ValueError(f"No overhangs found in {path}")
+            raise ValueError(
+                f"No four-base A/C/G/T overhangs found in {path}. Supply them as "
+                "a comma-separated row, one per row, or one per column."
+            )
         if len(overhangs) != len(set(overhangs)):
             raise ValueError("The overhang inventory contains duplicates.")
-        if any(len(value) != 4 or set(value) - DNA_BASES for value in overhangs):
-            raise ValueError("Every internal overhang must be four A/C/G/T bases.")
         return overhangs
 
     def _load_records(self) -> tuple[list[GeneRecord], list[dict[str, Any]]]:
@@ -1534,6 +1540,16 @@ def run_workflow(config: WorkflowConfig) -> WorkflowResult:
 
     optimized_df = prepare_optimized_input(config, paths)
     pool_assigner = PoolAssigner(config, paths, optimized_df, overhangs_path)
+    if config.show_progress:
+        excluded = (
+            ", ".join(pool_assigner.excluded_vector_overhangs)
+            if pool_assigner.excluded_vector_overhangs else "none"
+        )
+        print(
+            f"[OVERHANGS] {len(pool_assigner.overhangs)} supplied; "
+            f"{len(pool_assigner.internal_overhangs)} usable internally; "
+            f"vector overhangs excluded: {excluded}"
+        )
     assigned_df, unassigned, _search_nodes = pool_assigner.run()
     if not config.skip_primer_assignment and not assigned_df.empty:
         PrimerAssembler(config, paths, primers_path).run(assigned_df)

@@ -67,7 +67,7 @@ Must contain `name` and `dna_seq_optimized`. An optional `aa_seq` column is reta
 
 ### Overhang inventory
 
-`data/overhangs.csv` contains comma-separated 4-nt overhangs in its first cell. Values must be unique and contain only A/C/G/T.
+`data/overhangs.csv` supplies unique 4-nt A/C/G/T overhangs. Custom CSV/TXT files may be comma-separated or contain one value per row or column. Generate compatible sets with [NEB GetSet](https://ligasefidelity.neb.com/getset/run.cgi), using the configured 5′ and 3′ vector overhangs as **Required Overhangs**. Vector overhangs present in the file are accepted and automatically excluded from internal assignment.
 
 ### Primer inventory
 
