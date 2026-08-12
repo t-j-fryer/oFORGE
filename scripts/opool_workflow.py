@@ -1,4 +1,4 @@
-"""Reusable end-to-end oPool cloning workflow.
+"""Reusable implementation for oFORGE Designer.
 
 This module powers both the terminal CLI and the streamlined notebook. It runs:
 
@@ -1510,7 +1510,7 @@ def describe_config(
 ) -> str:
     genes_per_pool = "automatic" if config.genes_per_subpool is None else str(config.genes_per_subpool)
     lines = [
-        "oPool workflow configuration",
+        "oFORGE Designer configuration",
         f"  input:              {config.input_path.resolve()}",
         f"  input kind:         {config.input_kind}",
         f"  output directory:   {paths.run_dir}",

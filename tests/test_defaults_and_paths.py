@@ -13,7 +13,7 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
-from opool_cli import build_parser, config_from_args  # noqa: E402
+from oforge_cli import build_parser, config_from_args  # noqa: E402
 from opool_workflow import (  # noqa: E402
     DATA_DIR,
     DEFAULT_INPUT_PATH,
@@ -27,8 +27,10 @@ from opool_workflow import (  # noqa: E402
 
 class DefaultAndPathTests(unittest.TestCase):
     def test_cli_defaults_use_bundled_data(self) -> None:
-        config = config_from_args(build_parser().parse_args([]))
+        parser = build_parser()
+        config = config_from_args(parser.parse_args([]))
 
+        self.assertEqual(parser.prog, "oforge")
         self.assertEqual(config.input_path, DEFAULT_INPUT_PATH.resolve())
         self.assertEqual(
             _resolve_inventory(config.overhangs_path, "overhangs.csv"),
@@ -91,6 +93,7 @@ class DefaultAndPathTests(unittest.TestCase):
         public_files = [
             REPO_ROOT / "README.md",
             REPO_ROOT / "AI_WORKFLOW_SUMMARY.md",
+            REPO_ROOT / "scripts" / "oforge_cli.py",
             REPO_ROOT / "scripts" / "opool_cli.py",
             REPO_ROOT / "notebooks" / "oPool_Cloning_Notebook_Simple.ipynb",
             REPO_ROOT / "notebooks" / "oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb",
@@ -123,7 +126,8 @@ class DefaultAndPathTests(unittest.TestCase):
 
         self.assertEqual(notebook["nbformat"], 4)
         self.assertTrue(notebook["metadata"]["colab"]["include_colab_link"])
-        self.assertIn("https://github.com/t-j-fryer/oPool_Optimiser.git", code)
+        self.assertIn("https://github.com/t-j-fryer/oFORGE.git", code)
+        self.assertIn('PROJECT_ROOT = Path("/content/oFORGE")', code)
         self.assertIn("requirements-colab.txt", code)
         self.assertIn('PROJECT_ROOT / "data" / "AAseq_dTF001_dTF016.csv"', code)
         self.assertIn('PROJECT_ROOT / "data" / "fpbase_top500.csv"', code)
@@ -146,6 +150,8 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("docs/images/opool_wet_lab_workflow.png", markdown)
         self.assertIn("3 µL total oPool DNA", markdown)
         self.assertIn("https://ligasefidelity.neb.com/getset/run.cgi", markdown)
+        self.assertIn("# oFORGE Designer — Google Colab", markdown)
+        self.assertIn("oFORGE assembly", markdown)
 
         for cell in notebook["cells"]:
             if cell["cell_type"] == "code":
@@ -176,6 +182,14 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("90 alternating cycles", readme)
         self.assertIn("sub-pool-specific transformation", readme.lower())
         self.assertIn("https://ligasefidelity.neb.com/getset/run.cgi", readme)
+        self.assertTrue(readme.startswith("# oFORGE\n"))
+        self.assertIn("Scalable gene construction from oligonucleotide pools", readme)
+        self.assertIn("**o**ligo-pool **F**ragmentation", readme)
+        self.assertIn("oFORGE Designer", readme)
+        self.assertIn("oFORGE assembly", readme)
+        self.assertIn("t-j-fryer/oFORGE", readme)
+        self.assertNotIn("t-j-fryer/oPool_Optimiser", readme)
+        self.assertIn("name: oforge", (REPO_ROOT / "environment.yml").read_text())
 
         cost_png = (REPO_ROOT / "docs" / "images" / "pooled_library_cost_comparison.png").read_bytes()
         self.assertEqual(cost_png[12:16], b"IHDR")
