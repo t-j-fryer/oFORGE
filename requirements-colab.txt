@@ -1,0 +1,4 @@
+# Colab already supplies Python, Jupyter, NumPy, and pandas.
+# Keep this list limited to runtime packages that the notebook must add.
+dnachisel==3.2.16
+biopython>=1.84,<2
