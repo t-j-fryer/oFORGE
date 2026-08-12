@@ -73,7 +73,7 @@ Must contain `name` and `dna_seq_optimized`. An optional `aa_seq` column is reta
 
 ### Overhang inventory
 
-`data/overhangs.csv` supplies unique 4-nt A/C/G/T overhangs. Custom CSV/TXT files may be comma-separated or contain one value per row or column. Generate compatible sets with [NEB GetSet](https://ligasefidelity.neb.com/getset/run.cgi), using the configured 5′ and 3′ vector overhangs as **Required Overhangs**. Vector overhangs present in the file are accepted and automatically excluded from internal assignment.
+`data/overhangs.csv` supplies unique 4-nt A/C/G/T overhangs. Custom CSV/TXT files may be comma-separated or contain one value per row or column. Generate compatible sets with [NEB GetSet](https://ligasefidelity.neb.com/getset/run.cgi). In **Number of Overhangs**, enter the desired internal-overhang count plus the number of required vector overhangs—for example, enter `34` for 32 internal and two vector overhangs. Add the configured 5′ and 3′ vector overhangs to **Required Overhangs**. Vector overhangs present in the file are accepted and automatically excluded from internal assignment.
 
 ### Primer inventory
 
