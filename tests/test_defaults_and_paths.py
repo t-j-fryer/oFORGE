@@ -16,6 +16,7 @@ from opool_workflow import (  # noqa: E402
     DATA_DIR,
     DEFAULT_INPUT_PATH,
     RunPaths,
+    _read_aa_input,
     _resolve_inventory,
 )
 
@@ -116,12 +117,18 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("https://github.com/t-j-fryer/oPool_Optimiser.git", code)
         self.assertIn("requirements-colab.txt", code)
         self.assertIn('PROJECT_ROOT / "data" / "AAseq_dTF001_dTF016.csv"', code)
+        self.assertIn('PROJECT_ROOT / "data" / "fpbase_top500.csv"', code)
         self.assertIn('PROJECT_ROOT / "data" / "overhangs.csv"', code)
         self.assertIn('PROJECT_ROOT / "data" / "orthogonal_oligos.csv"', code)
         self.assertIn("files.upload()", code)
         self.assertIn("files.download", code)
         self.assertIn("SAVE_TO_GOOGLE_DRIVE = False", code)
+        self.assertIn("USE_BUNDLED_DATASET = True", code)
+        self.assertIn('BUNDLED_DATASET = "AAseq_dTF001_dTF016.csv"', code)
+        self.assertIn('OPOOL_LENGTH = 250  # @param {type:"slider", min:250, max:350, step:10}', code)
         self.assertIn("GENES_PER_SUBPOOL = 0", code)
+        self.assertIn('"Total order oligos"', code)
+        self.assertIn("subpool_summary", code)
         self.assertIn("WorkflowConfig(", code)
 
         for cell in notebook["cells"]:
@@ -145,6 +152,16 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertTrue(DEFAULT_INPUT_PATH.is_file())
         self.assertEqual(DEFAULT_INPUT_PATH.name, "AAseq_dTF001_dTF016.csv")
         self.assertFalse((DATA_DIR / "example_amino_acids.csv").exists())
+
+    def test_fpbase_bundled_dataset_uses_friendly_sequence_header(self) -> None:
+        fpbase_path = DATA_DIR / "fpbase_top500.csv"
+        parsed = _read_aa_input(fpbase_path)
+
+        self.assertEqual(len(parsed), 500)
+        self.assertEqual(list(parsed.columns), ["name", "aa_seq"])
+        self.assertEqual(parsed.iloc[0]["name"], "AausFP1")
+        self.assertTrue(parsed["name"].is_unique)
+        self.assertFalse(parsed["aa_seq"].isna().any())
 
 
 if __name__ == "__main__":

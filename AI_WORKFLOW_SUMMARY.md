@@ -20,6 +20,7 @@ The Colab notebook is also a thin front end over `scripts/opool_workflow.py`. It
 
 ```yaml
 input: data/AAseq_dTF001_dTF016.csv
+alternative_bundled_input: data/fpbase_top500.csv
 overhang_inventory: data/overhangs.csv
 primer_inventory: data/orthogonal_oligos.csv
 output_directory_for_bundled_input: outputs/
@@ -55,7 +56,7 @@ These defaults are deliberately repository-owned. Do not replace them with files
 
 Accepted forms:
 
-1. Headered CSV with `name` and `aa_seq` columns.
+1. Headered CSV with `name` and either `aa_seq` or `amino_acid_sequence`.
 2. Headerless two-column CSV containing sequence name then amino-acid sequence.
 
 Names must be unique. Sequences use standard one-letter amino-acid codes; whitespace is removed and letters are normalized to uppercase.
