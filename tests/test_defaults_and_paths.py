@@ -47,6 +47,15 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertFalse(config.force)
         self.assertEqual(RunPaths.from_config(config).run_dir, REPO_ROOT / "outputs")
 
+    def test_common_orderable_oligo_lengths_are_accepted(self) -> None:
+        parser = build_parser()
+        for length in (120, 150, 200, 250, 300, 350):
+            with self.subTest(length=length):
+                config = config_from_args(
+                    parser.parse_args(["--opool-length", str(length)])
+                )
+                self.assertEqual(config.opool_length, length)
+
     def test_repo_data_paths_work_outside_repository(self) -> None:
         previous_cwd = Path.cwd()
         with tempfile.TemporaryDirectory() as tempdir:
@@ -155,7 +164,10 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn('CUSTOM_OVERHANGS_TEXT = ""', code)
         self.assertIn("Select the custom GetSet overhang CSV/TXT", code)
         self.assertIn('BUNDLED_DATASET = "AAseq_dTF001_dTF016.csv"', code)
-        self.assertIn('OPOOL_LENGTH = 250  # @param {type:"slider", min:250, max:350, step:10}', code)
+        self.assertIn(
+            'OPOOL_LENGTH = 250  # @param [120, 150, 200, 250, 300, 350] {type:"raw"}',
+            code,
+        )
         self.assertIn("GENES_PER_SUBPOOL = 0", code)
         self.assertIn('"Total order oligos"', code)
         self.assertIn("subpool_summary", code)
@@ -167,6 +179,19 @@ class DefaultAndPathTests(unittest.TestCase):
         self.assertIn("enter `34` for 32 internal and two vector overhangs", markdown)
         self.assertIn("# oFORGE Designer — Google Colab", markdown)
         self.assertIn("oFORGE assembly", markdown)
+        self.assertIn("120, 150, 200, 250, 300, or 350 nt", markdown)
+
+        advanced_notebook = (
+            REPO_ROOT / "notebooks" / "oPool_Cloning_Notebook_Fast_Pool_Assignment.ipynb"
+        ).read_text()
+        self.assertIn(
+            "OPOOL_LENGTH is defined again in Primer assignment. Keep both values identical.",
+            advanced_notebook,
+        )
+        self.assertIn(
+            "must exactly match OPOOL_LENGTH in Pool assignment",
+            advanced_notebook,
+        )
 
         for cell in notebook["cells"]:
             if cell["cell_type"] == "code":

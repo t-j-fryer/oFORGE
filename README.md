@@ -145,17 +145,17 @@ Colab runtimes are temporary. Download the ZIP before closing the runtime unless
 
 ### Exploring oligo length
 
-The Colab notebook provides an `OPOOL_LENGTH` slider from 250 to 350 nt. A sensible first comparison is to run the same dataset once at each endpoint:
+The Colab notebook provides an `OPOOL_LENGTH` selector with the common orderable lengths `120`, `150`, `200`, `250`, `300`, and `350` nt. A sensible first comparison is to run the same dataset once at a shorter length and once at a longer length:
 
-- **250 nt:** less coding capacity per oligo after primers and assembly elements, usually producing more fragments and more order oligos. Because each fragmented gene consumes unique internal overhangs, automatic sub-pools may also contain fewer genes.
-- **350 nt:** more coding capacity, usually producing fewer fragments and order oligos and allowing more genes per sub-pool. Longer oligos may have different synthesis pricing or vendor constraints.
+- **120–200 nt:** less coding capacity per oligo after primers and assembly elements, usually producing more fragments and more order oligos. Because each fragmented gene consumes unique internal overhangs, automatic sub-pools may also contain fewer genes.
+- **250–350 nt:** more coding capacity, usually producing fewer fragments and order oligos and allowing more genes per sub-pool. Longer oligos may have different synthesis pricing or vendor constraints.
 
 Every Colab run writes to a new timestamped folder. Compare **Total order oligos**, **Sub-pools**, and the displayed genes/oligos-per-sub-pool table. The order CSV row count is the number of oligos to purchase.
 
 The same comparison can be run from the terminal, for example:
 
 ```bash
-python scripts/oforge_cli.py --input data/fpbase_top500.csv --opool-length 250 --run-name fpbase_250
+python scripts/oforge_cli.py --input data/fpbase_top500.csv --opool-length 120 --run-name fpbase_120
 python scripts/oforge_cli.py --input data/fpbase_top500.csv --opool-length 350 --run-name fpbase_350
 ```
 
