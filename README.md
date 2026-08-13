@@ -74,7 +74,7 @@ In practice, prepare a modest excess of Q5 master mix and water to account for p
 | Final extension | 72 °C | 2 min | 1 |
 | Hold | 4 °C | ∞ | — |
 
-Following amplification, purify PCR products using **1.8× PCRClean DX beads**. Concentration normalization of individual sub-pool PCR products is not required before Golden Gate assembly.
+Following amplification, purify PCR products using **1.8× PCRClean DX beads** and resuspend in 10 µl. Concentration normalization of individual sub-pool PCR products is not required before Golden Gate assembly.
 
 ### 2. Multiplexed Golden Gate assembly
 
